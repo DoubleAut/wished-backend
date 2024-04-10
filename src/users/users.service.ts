@@ -102,6 +102,10 @@ export class UsersService {
         const user = await User.withFriends(await User.findUserById(id));
         const { followers, followings, password, ...rest } = updateUserDto;
 
+        if (followings) {
+            await this.addFriend(user, followings);
+        }
+
         for (const key in rest) {
             if (updateUserDto[key]) {
                 user[key] = updateUserDto[key];
