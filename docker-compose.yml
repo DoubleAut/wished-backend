@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+    wished-db:
+        image: postgres
+        restart: always
+        container_name: wished-db
+        ports:
+            - 5432:5432
+        environment:
+            POSTGRES_DB: wished
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: example
