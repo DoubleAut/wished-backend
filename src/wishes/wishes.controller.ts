@@ -13,16 +13,16 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { AccessAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
-import { UserValidationGuard } from './guards/user.validation.guard';
 import { WishesService } from './wishes.service';
 
 @Controller('wishes')
 export class WishesController {
     constructor(private readonly wishesService: WishesService) {}
 
-    @UseGuards(UserValidationGuard)
+    @UseGuards(AccessAuthGuard)
     @Post()
     async create(@Req() request: Request, @Body() updateDto: CreateWishDto) {
         const user = request.user as { sub: number; email: string };
@@ -36,11 +36,11 @@ export class WishesController {
     }
 
     @Get(':id')
-    async findAll(@Param('id', ParseIntPipe) id: number) {
-        return await this.wishesService.findAll(id);
+    async findAll(@Param('id', ParseIntPipe) userId: number) {
+        return await this.wishesService.findAll(userId);
     }
 
-    @UseGuards(UserValidationGuard)
+    @UseGuards(AccessAuthGuard)
     @Patch(':id')
     update(
         @Param('id', ParseIntPipe) id: number,
@@ -49,9 +49,18 @@ export class WishesController {
         return this.wishesService.update(id, updateWishDto);
     }
 
-    @UseGuards(UserValidationGuard)
+    @UseGuards(AccessAuthGuard)
     @Delete(':id')
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.wishesService.remove(id);
+    }
+
+    @UseGuards(AccessAuthGuard)
+    @Post('reserve/:id')
+    reserve(
+        @Param('id', ParseIntPipe) id: number,
+        @Body('reserverId', ParseIntPipe) reserverId: number,
+    ) {
+        return this.wishesService.reserve(reserverId, id);
     }
 }
