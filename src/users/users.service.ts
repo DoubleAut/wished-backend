@@ -51,6 +51,11 @@ export class UsersService {
 
     async validateUser(email: string, pass: string) {
         const user = await User.findUserByEmail(email);
+
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+
         const isValid = await this.validatePassword(pass, user.password);
 
         if (isValid) {
@@ -95,13 +100,10 @@ export class UsersService {
 
     async update(id: number, updateUserDto: UpdateUserDto) {
         const user = await User.withFriends(await User.findUserById(id));
+        const { followers, followings, password, ...rest } = updateUserDto;
 
-        for (const key in updateUserDto) {
-            if (key === 'followings') {
-                await this.addFriend(user, updateUserDto.followings);
-            } else if (key === 'password') {
-                continue;
-            } else if (updateUserDto[key]) {
+        for (const key in rest) {
+            if (updateUserDto[key]) {
                 user[key] = updateUserDto[key];
             }
         }
