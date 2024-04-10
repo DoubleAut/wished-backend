@@ -53,9 +53,7 @@ export class WishesService {
             }
         }
 
-        const updatedWish = await this.wishesRepository.save(wish);
-
-        return updatedWish;
+        return await this.wishesRepository.save(wish);
     }
 
     async remove(id: number) {
