@@ -30,9 +30,18 @@ export class Wish extends BaseEntity {
     @Column({ default: false })
     isReserved: boolean;
 
+    @ManyToOne(() => User, (user) => user.reservations)
+    reservedBy: User | null;
+
     @Column({ nullable: true })
     picture: string;
 
     @ManyToOne(() => User, (user) => user.wishes)
-    user: User;
+    owner: User;
+
+    static async getWishes(userId: number) {
+        return await this.createQueryBuilder('wish')
+            .where('wish.ownerId = :id', { id: userId })
+            .getMany();
+    }
 }
