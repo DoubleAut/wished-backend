@@ -17,7 +17,7 @@ export class WishesService {
     ) {}
 
     async create(createWishDto: CreateWishDto) {
-        const user = await User.findUserById(createWishDto.userId);
+        const owner = await User.findUserById(createWishDto.userId);
         const wish = new Wish();
 
         wish.title = createWishDto.title;
@@ -27,25 +27,51 @@ export class WishesService {
         wish.isHidden = createWishDto.isHidden;
         wish.isReserved = createWishDto.isReserved;
         wish.picture = createWishDto.picture;
-        wish.user = user;
+        wish.owner = owner;
 
         const result = await this.wishesRepository.save(wish);
 
         return {
             ...result,
-            user: new CreatePublicUserDto(result.user),
+            owner: new CreatePublicUserDto(result.owner),
         };
     }
 
     /*
-        TODO: Handle partial selection of a wishes.
+        PROPOSAL: Handle partial selection of a wishes.
         
         Example: GET url/wishes/2?page=1&items_gap=15
     */
     async findAll(userId: number) {
-        const user = await this.usersService.getPublicUserById(userId);
+        const wishes = await Wish.getWishes(userId);
 
-        return user.wishes;
+        return wishes.map((wish) => {
+            if (wish.canBeAnon) {
+                const { reservedBy, ...rest } = wish;
+
+                return rest;
+            }
+
+            return {
+                ...wish,
+                reservedBy: new CreatePublicUserDto(wish.reservedBy),
+            };
+        });
+    }
+
+    async reserve(reserverId: number, wishId: number) {
+        const wish = await this.wishesRepository.findOneBy({ id: wishId });
+        const reserver = await User.findUserById(reserverId);
+
+        wish.isReserved = true;
+        wish.reservedBy = reserver;
+
+        const result = await this.wishesRepository.save(wish);
+
+        return {
+            ...result,
+            reservedBy: new CreatePublicUserDto(result.reservedBy),
+        };
     }
 
     async update(id: number, updateWishDto: UpdateWishDto) {
