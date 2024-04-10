@@ -32,6 +32,12 @@ export class User extends BaseEntity {
     @Column({ default: false })
     isActive: boolean;
 
+    @OneToMany(() => Wish, (wish) => wish.owner)
+    wishes: Wish[];
+
+    @OneToMany(() => Wish, (wish) => wish.reservedBy)
+    reservations: Wish[];
+
     @ManyToMany(() => User, (user) => user.id)
     @JoinTable({
         name: 'user_followings',
@@ -47,9 +53,6 @@ export class User extends BaseEntity {
         inverseJoinColumn: { name: 'users_id', referencedColumnName: 'id' },
     })
     followers: User[];
-
-    @OneToMany(() => Wish, (wish) => wish.user)
-    wishes: Wish[];
 
     static findUserById(id: number) {
         return this.createQueryBuilder('user')
