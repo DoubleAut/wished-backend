@@ -37,6 +37,11 @@ export class WishesService {
         };
     }
 
+    /*
+        TODO: Handle partial selection of a wishes.
+        
+        Example: GET url/wishes/2?page=1&items_gap=15
+    */
     async findAll(userId: number) {
         const user = await this.usersService.getPublicUserById(userId);
 
