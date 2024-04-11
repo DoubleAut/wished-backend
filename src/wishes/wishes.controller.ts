@@ -3,8 +3,6 @@ import {
     Controller,
     Delete,
     Get,
-    HttpException,
-    HttpStatus,
     Param,
     ParseIntPipe,
     Patch,
@@ -16,22 +14,16 @@ import { Request } from 'express';
 import { AccessAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
+import { ValidationGuard } from './strategies/user.strategy';
 import { WishesService } from './wishes.service';
 
 @Controller('wishes')
 export class WishesController {
     constructor(private readonly wishesService: WishesService) {}
 
-    @UseGuards(AccessAuthGuard)
+    @UseGuards(AccessAuthGuard, ValidationGuard)
     @Post()
-    async create(@Req() request: Request, @Body() updateDto: CreateWishDto) {
-        const user = request.user as { sub: number; email: string };
-        const isUserValid = updateDto.userId === user.sub;
-
-        if (!isUserValid) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-        }
-
+    async create(@Body() updateDto: CreateWishDto) {
         return await this.wishesService.create(updateDto);
     }
 
@@ -40,7 +32,7 @@ export class WishesController {
         return await this.wishesService.findAll(userId);
     }
 
-    @UseGuards(AccessAuthGuard)
+    @UseGuards(AccessAuthGuard, ValidationGuard)
     @Patch(':id')
     update(
         @Param('id', ParseIntPipe) id: number,
@@ -49,7 +41,7 @@ export class WishesController {
         return this.wishesService.update(id, updateWishDto);
     }
 
-    @UseGuards(AccessAuthGuard)
+    @UseGuards(AccessAuthGuard, ValidationGuard)
     @Delete(':id')
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.wishesService.remove(id);
@@ -57,10 +49,17 @@ export class WishesController {
 
     @UseGuards(AccessAuthGuard)
     @Post('reserve/:id')
-    reserve(
-        @Param('id', ParseIntPipe) id: number,
-        @Body('reserverId', ParseIntPipe) reserverId: number,
-    ) {
-        return this.wishesService.reserve(reserverId, id);
+    reserve(@Req() request: Request, @Param('id', ParseIntPipe) id: number) {
+        const user = request.user as { sub: number; email: string };
+
+        return this.wishesService.reserve(user.sub, id);
+    }
+
+    @UseGuards(AccessAuthGuard)
+    @Post('cancel/:id')
+    cancel(@Req() request: Request, @Param('id', ParseIntPipe) wishId: number) {
+        const user = request.user as { sub: number; email: string };
+
+        return this.wishesService.cancel(user.sub, wishId);
     }
 }

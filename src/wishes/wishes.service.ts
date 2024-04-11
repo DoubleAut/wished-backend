@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePublicUserDto } from 'src/users/dto/create-user.dto';
 import { User } from 'src/users/entity/user.entity';
-import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
@@ -11,7 +10,6 @@ import { Wish } from './entities/wish.entity';
 @Injectable()
 export class WishesService {
     constructor(
-        private readonly usersService: UsersService,
         @InjectRepository(Wish)
         private readonly wishesRepository: Repository<Wish>,
     ) {}
@@ -60,10 +58,17 @@ export class WishesService {
     }
 
     async reserve(reserverId: number, wishId: number) {
-        const wish = await this.wishesRepository.findOneBy({ id: wishId });
+        const wish = await Wish.getWishWithReserver(wishId);
+
+        if (wish.reservedBy) {
+            throw new HttpException(
+                'Wish is already reserved',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
         const reserver = await User.findUserById(reserverId);
 
-        wish.isReserved = true;
         wish.reservedBy = reserver;
 
         const result = await this.wishesRepository.save(wish);
@@ -72,6 +77,32 @@ export class WishesService {
             ...result,
             reservedBy: new CreatePublicUserDto(result.reservedBy),
         };
+    }
+
+    async cancel(reserverId: number, wishId: number) {
+        const wish = await Wish.getWishWithReserver(wishId);
+
+        if (!wish.reservedBy) {
+            throw new HttpException(
+                'Wish is not reserved',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        const isUserReservedAWish = wish.reservedBy.id === reserverId;
+
+        if (!isUserReservedAWish) {
+            throw new HttpException(
+                'User is not the reserver',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        wish.reservedBy = null;
+
+        const result = await this.wishesRepository.save(wish);
+
+        return result;
     }
 
     async update(id: number, updateWishDto: UpdateWishDto) {
