@@ -21,15 +21,15 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
     ) {}
 
-    private async updateFriendFollowers(userId: number, friendId: number) {
-        const user = await User.withFriends(await User.findUserById(userId));
-        const friend = await User.withFriends(
-            await User.findUserById(friendId),
+    private async updateFriendFollowers(friendId: number, userId: number) {
+        const friend = await User.withFriends(await User.findUserById(friendId));
+        const user = await User.withFriends(
+            await User.findUserById(userId),
         );
 
-        user.followers.push(friend);
+        friend.followers.push(user);
 
-        this.usersRepository.save(user);
+        this.usersRepository.save(friend);
     }
 
     private async addFriend(user: User, friendId: number) {
