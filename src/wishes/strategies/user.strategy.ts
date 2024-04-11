@@ -1,32 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { jwtConstants } from 'src/auth/constants';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 
+/**
+ * Validation guard - checks the decoded JWT token and userId provided in the body, to verificate the identity that made a request
+ */
 @Injectable()
-export class UserValidationStrategy extends PassportStrategy(
-    Strategy,
-    'user-validation',
-) {
-    constructor() {
-        super({
-            jwtFromRequest: ExtractJwt.fromExtractors([
-                (req) => {
-                    if (!req.headers?.authorization) {
-                        return null;
-                    }
+export class ValidationGuard implements CanActivate {
+    constructor() {}
+    canActivate(context: ExecutionContext): boolean {
+        const request = context.switchToHttp().getRequest();
 
-                    const [key, value] = req.headers?.authorization.split(' ');
-
-                    return value;
-                },
-            ]),
-            ignoreExpiration: false,
-            secretOrKey: jwtConstants.secret,
-        });
-    }
-
-    async validate(user: unknown) {
-        return user;
+        return request.user.sub === request.body.userId;
     }
 }
