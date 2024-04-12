@@ -9,7 +9,7 @@ import {
     Post,
     UseGuards,
 } from '@nestjs/common';
-import { AccessAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { AccessAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 

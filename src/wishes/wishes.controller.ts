@@ -11,7 +11,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AccessAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { AccessAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
 import { ValidationGuard } from './strategies/user.strategy';

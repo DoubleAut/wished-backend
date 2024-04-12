@@ -1,4 +1,3 @@
-import { Wish } from 'src/wishes/entities/wish.entity';
 import {
     BaseEntity,
     Column,
@@ -8,6 +7,7 @@ import {
     OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Wish } from '../../wishes/entities/wish.entity';
 
 @Entity()
 export class User extends BaseEntity {
