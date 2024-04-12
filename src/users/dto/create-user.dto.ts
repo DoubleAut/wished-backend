@@ -1,4 +1,4 @@
-import { Wish } from 'src/wishes/entities/wish.entity';
+import { Wish } from '../../wishes/entities/wish.entity';
 import { User } from '../entity/user.entity';
 
 export class CreateUserDto {

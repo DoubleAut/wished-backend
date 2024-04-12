@@ -1,4 +1,3 @@
-import { User } from 'src/users/entity/user.entity';
 import {
     AfterLoad,
     BaseEntity,
@@ -7,6 +6,7 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';
+import { User } from '../../users/entity/user.entity';
 
 @Entity()
 export class Wish extends BaseEntity {

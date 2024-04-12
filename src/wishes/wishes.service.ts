@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreatePublicUserDto } from 'src/users/dto/create-user.dto';
-import { User } from 'src/users/entity/user.entity';
 import { Repository } from 'typeorm';
+import { CreatePublicUserDto } from '../users/dto/create-user.dto';
+import { User } from '../users/entity/user.entity';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
 import { Wish } from './entities/wish.entity';
