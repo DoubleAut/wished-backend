@@ -1,17 +1,21 @@
+import { IsEmail, IsNotEmpty } from 'class-validator';
 import { Wish } from '../../wishes/entities/wish.entity';
 import { User } from '../entity/user.entity';
 
 export class CreateUserDto {
-    id: number;
+    @IsEmail()
     email: string;
+
+    @IsNotEmpty()
     password: string;
+
+    @IsNotEmpty()
     name: string;
+
+    @IsNotEmpty()
     surname: string;
-    picture: string;
-    isActive: boolean;
-    followings: User[];
-    followers: User[];
-    wishes: Wish[];
+
+    picture?: string;
 }
 
 interface PublicUserDTO {

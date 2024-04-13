@@ -1,7 +1,6 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { AccessAuthGuard, RefreshAuthGuard } from './guards/jwt-auth.guard';
 
@@ -15,9 +14,8 @@ export class AuthController {
         @Req() request: Request,
         @Res({ passthrough: true }) response: Response,
     ) {
-        const tokens = await this.authService.signIn(
-            request.user as CreateUserDto,
-        );
+        const user = request.user as { sub: number; email: string };
+        const tokens = await this.authService.signIn(user);
 
         response.cookie('refreshToken', tokens.refreshToken, {
             httpOnly: true,
