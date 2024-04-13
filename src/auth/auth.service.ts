@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { Auth } from './entity/auth.entity';
 
@@ -58,18 +57,18 @@ export class AuthService {
         return !!isValid;
     }
 
-    async signIn(user: CreateUserDto) {
+    async signIn(user: { sub: number; email: string }) {
         const userTokens = await this.authRepository.findOneBy({
-            userId: user.id,
+            userId: user.sub,
         });
 
-        const payload = { sub: user.id, email: user.email };
+        const payload = { sub: user.sub, email: user.email };
         const tokens = await this.generateTokens(payload);
 
         if (!userTokens) {
             return await this.saveTokensAndReturn({
                 ...tokens,
-                userId: user.id,
+                userId: user.sub,
             });
         } else {
             return await this.updateTokensAndReturn(tokens, userTokens);

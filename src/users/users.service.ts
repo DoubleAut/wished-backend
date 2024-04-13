@@ -22,10 +22,10 @@ export class UsersService {
     ) {}
 
     private async updateFriendFollowers(friendId: number, userId: number) {
-        const friend = await User.withFriends(await User.findUserById(friendId));
-        const user = await User.withFriends(
-            await User.findUserById(userId),
+        const friend = await User.withFriends(
+            await User.findUserById(friendId),
         );
+        const user = await User.withFriends(await User.findUserById(userId));
 
         friend.followers.push(user);
 
@@ -100,7 +100,7 @@ export class UsersService {
 
     async update(id: number, updateUserDto: UpdateUserDto) {
         const user = await User.withFriends(await User.findUserById(id));
-        const { followers, followings, password, ...rest } = updateUserDto;
+        const { followings, password, ...rest } = updateUserDto;
 
         if (followings) {
             await this.addFriend(user, followings);

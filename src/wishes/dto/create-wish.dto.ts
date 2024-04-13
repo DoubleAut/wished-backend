@@ -1,14 +1,26 @@
-import { User } from '../../users/entity/user.entity';
+import { IsNotEmpty } from 'class-validator';
 
 export class CreateWishDto {
-    id: number;
+    @IsNotEmpty()
     title: string;
+
     description: string;
+
+    @IsNotEmpty()
     price: string;
+
+    @IsNotEmpty()
     canBeAnon: boolean;
+
+    @IsNotEmpty()
     isHidden: boolean;
+
+    @IsNotEmpty()
     isReserved: boolean;
+
+    @IsNotEmpty()
     picture?: string;
+
+    @IsNotEmpty()
     userId: number;
-    user?: User;
 }
