@@ -122,7 +122,7 @@ export class UsersService {
     }
 
     async create(data: CreateProps) {
-        const isExist = this.findUserByEmail(data.email);
+        const isExist = await this.findUserByEmail(data.email);
 
         if (!!isExist) {
             throw new HttpException('User already exist', HttpStatus.CONFLICT);

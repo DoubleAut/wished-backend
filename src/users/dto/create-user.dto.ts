@@ -25,9 +25,9 @@ interface PublicUserDTO {
     surname: string;
     picture: string;
     isActive: boolean;
-    followings: User[];
-    followers: User[];
-    wishes: Wish[];
+    followings?: User[];
+    followers?: User[];
+    wishes?: Wish[];
 }
 
 export class CreatePublicUserDto implements PublicUserDTO {
@@ -37,9 +37,9 @@ export class CreatePublicUserDto implements PublicUserDTO {
     surname: string;
     picture: string;
     isActive: boolean;
-    followers: User[];
-    followings: User[];
-    wishes: Wish[];
+    followers?: User[];
+    followings?: User[];
+    wishes?: Wish[];
 
     constructor({ password, ...user }: User) {
         return {
