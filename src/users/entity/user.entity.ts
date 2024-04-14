@@ -53,43 +53,4 @@ export class User extends BaseEntity {
         inverseJoinColumn: { name: 'users_id', referencedColumnName: 'id' },
     })
     followers: User[];
-
-    static findUserById(id: number) {
-        return this.createQueryBuilder('user')
-            .where('user.id = :id', { id })
-            .getOne();
-    }
-
-    static findUserByEmail(email: string) {
-        return this.createQueryBuilder('user')
-            .where('user.email = :email', {
-                email,
-            })
-            .getOne();
-    }
-
-    static withWishes(user: User) {
-        return this.createQueryBuilder('user')
-            .leftJoinAndSelect('user.wishes', 'wish')
-            .where('user.id = :id', { id: user.id })
-            .getOne();
-    }
-
-    static withFriends(user: User) {
-        return this.createQueryBuilder('user')
-            .leftJoinAndSelect('user.followers', 'followers')
-            .leftJoinAndSelect('user.followings', 'followings')
-            .where('user.id = :id', { id: user.id })
-            .getOne();
-    }
-
-    static findFullyPopulatedUser(id?: number, email?: string) {
-        return this.createQueryBuilder('user')
-            .leftJoinAndSelect('user.wishes', 'wishes')
-            .leftJoinAndSelect('user.followers', 'followers')
-            .leftJoinAndSelect('user.followings', 'followings')
-            .where('user.id = :id', { id })
-            .orWhere('user.email = :email', { email })
-            .getOne();
-    }
 }
