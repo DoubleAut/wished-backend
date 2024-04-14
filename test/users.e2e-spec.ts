@@ -1,24 +1,22 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { UsersController } from 'src/users/users.controller';
+import { UsersService } from 'src/users/users.service';
 import * as request from 'supertest';
-import { User } from '../src/users/entity/user.entity';
 import { UsersModule } from '../src/users/users.module';
-import { UsersService } from '../src/users/users.service';
 
 describe('UsersController (e2e)', () => {
     let app: INestApplication;
 
-    const mockUsersRepository = {};
-
-    beforeEach(async () => {
+    beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [UsersModule],
+            controllers: [UsersController],
             providers: [
                 UsersService,
                 {
                     provide: getRepositoryToken(User),
-                    useValue: mockUsersRepository,
                 },
             ],
         }).compile();
@@ -30,13 +28,22 @@ describe('UsersController (e2e)', () => {
     it('/users (CREATE A USER)', () => {
         return request(app.getHttpServer())
             .post('/users')
-            .set({
+            .send({
                 email: 'richard@mail.com',
                 password: 'testing',
                 name: 'Richard',
                 surname: 'Pickman',
             })
-            .expect(201);
+            .expect(201)
+            .expect({
+                id: expect.any(Number),
+                email: 'richard@mail.com',
+                password: 'testing',
+                name: 'Richard',
+                surname: 'Pickman',
+                isActive: false,
+                picture: null,
+            });
     });
 
     it('/:id (GET)', () => {
