@@ -12,10 +12,14 @@ export class WishesService {
     constructor(
         @InjectRepository(Wish)
         private readonly wishesRepository: Repository<Wish>,
+        @InjectRepository(User)
+        private readonly usersRepository: Repository<User>,
     ) {}
 
     async create(createWishDto: CreateWishDto) {
-        const owner = await User.findUserById(createWishDto.userId);
+        const owner = await this.usersRepository.findOneBy({
+            id: createWishDto.userId,
+        });
         const wish = new Wish();
 
         wish.title = createWishDto.title;
@@ -67,7 +71,9 @@ export class WishesService {
             );
         }
 
-        const reserver = await User.findUserById(reserverId);
+        const reserver = await this.usersRepository.findOneBy({
+            id: reserverId,
+        });
 
         wish.reservedBy = reserver;
 
