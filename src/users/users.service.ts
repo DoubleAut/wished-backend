@@ -21,11 +21,55 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
     ) {}
 
+    private findUserById(id: number) {
+        return this.usersRepository
+            .createQueryBuilder('user')
+            .where('user.id = :id', { id })
+            .getOne();
+    }
+
+    private findUserByEmail(email: string) {
+        return this.usersRepository
+            .createQueryBuilder('user')
+            .where('user.email = :email', {
+                email,
+            })
+            .getOne();
+    }
+
+    private withWishes(user: User) {
+        return this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.wishes', 'wish')
+            .where('user.id = :id', { id: user.id })
+            .getOne();
+    }
+
+    private withFriends(user: User) {
+        return this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.followers', 'followers')
+            .leftJoinAndSelect('user.followings', 'followings')
+            .where('user.id = :id', { id: user.id })
+            .getOne();
+    }
+
+    private findFullyPopulatedUser(id?: number, email?: string) {
+        return this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.wishes', 'wishes')
+            .leftJoinAndSelect('user.followers', 'followers')
+            .leftJoinAndSelect('user.followings', 'followings')
+            .where('user.id = :id', { id })
+            .orWhere('user.email = :email', { email })
+            .getOne();
+    }
+
     private async updateFriendFollowers(friendId: number, userId: number) {
-        const friend = await User.withFriends(
-            await User.findUserById(friendId),
+        const friend = await this.withFriends(
+            await this.findUserById(friendId),
         );
-        const user = await User.withFriends(await User.findUserById(userId));
+        const user = await this.withFriends(await this.findUserById(userId));
 
         friend.followers.push(user);
 
@@ -33,7 +77,7 @@ export class UsersService {
     }
 
     private async addFriend(user: User, friendId: number) {
-        const friend = await User.findUserById(friendId);
+        const friend = await this.findUserById(friendId);
         const isIncluded = user.followings.find(
             (friend) => friend.id === friendId,
         );
@@ -50,7 +94,7 @@ export class UsersService {
     }
 
     async validateUser(email: string, pass: string) {
-        const user = await User.findUserByEmail(email);
+        const user = await this.findUserByEmail(email);
 
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -66,19 +110,19 @@ export class UsersService {
     }
 
     async getPublicUserById(id: number) {
-        const user = await User.findFullyPopulatedUser(id);
+        const user = await this.findFullyPopulatedUser(id);
 
         return new CreatePublicUserDto(user);
     }
 
     async getPublicUserByEmail(email: string) {
-        const user = await User.findFullyPopulatedUser(undefined, email);
+        const user = await this.findFullyPopulatedUser(undefined, email);
 
         return new CreatePublicUserDto(user);
     }
 
     async create(data: CreateProps) {
-        const isExist = await User.findUserByEmail(data.email);
+        const isExist = this.findUserByEmail(data.email);
 
         if (!!isExist) {
             throw new HttpException('User already exist', HttpStatus.CONFLICT);
@@ -99,7 +143,7 @@ export class UsersService {
     }
 
     async update(id: number, updateUserDto: UpdateUserDto) {
-        const user = await User.withFriends(await User.findUserById(id));
+        const user = await this.withFriends(await this.findUserById(id));
         const { followings, password, ...rest } = updateUserDto;
 
         if (followings) {
