@@ -107,9 +107,8 @@ export class WishesService {
 
     async update(id: number, updateWishDto: UpdateWishDto) {
         const wish = await Wish.findOneBy({ id });
-        const { user, ...rest } = updateWishDto;
 
-        for (const key in rest) {
+        for (const key in updateWishDto) {
             if (updateWishDto[key]) {
                 wish[key] = updateWishDto[key];
             }

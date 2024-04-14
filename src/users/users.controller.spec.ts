@@ -64,14 +64,7 @@ describe('UsersController', () => {
                 surname: 'Pickman',
             };
 
-            expect(
-                await usersController.create(
-                    user.email,
-                    user.password,
-                    user.name,
-                    user.surname,
-                ),
-            ).toEqual({
+            expect(await usersController.create(user)).toEqual({
                 ...user,
                 id: expect.any(Number),
                 picture: null,
