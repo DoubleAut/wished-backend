@@ -53,7 +53,7 @@ describe('UsersController', () => {
             const wish: CreateWishDto = {
                 title: '',
                 description: '',
-                price: '',
+                price: 123,
                 canBeAnon: true,
                 isHidden: false,
                 isReserved: false,
@@ -77,7 +77,7 @@ describe('UsersController', () => {
             const wish: CreateWishDto = {
                 title: '',
                 description: '',
-                price: '',
+                price: 123,
                 canBeAnon: true,
                 isHidden: false,
                 isReserved: false,
@@ -113,7 +113,7 @@ describe('UsersController', () => {
             const wish: CreateWishDto = {
                 title: '',
                 description: '',
-                price: '',
+                price: 123,
                 canBeAnon: true,
                 isHidden: false,
                 isReserved: false,
@@ -156,7 +156,7 @@ describe('UsersController', () => {
                 id: 1,
                 title: 'test',
                 description: 'test',
-                price: 'test',
+                price: 22,
                 canBeAnon: false,
                 isHidden: false,
                 isReserved: true,

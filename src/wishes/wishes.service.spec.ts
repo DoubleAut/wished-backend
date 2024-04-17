@@ -23,7 +23,7 @@ const getRandomWish = (owner: User, reservedBy?: User) => {
 
     wish.title = crypto.randomUUID();
     wish.description = crypto.randomUUID();
-    wish.price = crypto.randomUUID();
+    wish.price = Math.random() * 1000;
     wish.canBeAnon = true;
     wish.isHidden = false;
     wish.isReserved = false;
@@ -83,7 +83,7 @@ describe('UsersController', () => {
             const request = {
                 title: 'test',
                 description: 'test',
-                price: 'test',
+                price: 22,
                 canBeAnon: false,
                 isHidden: false,
                 isReserved: true,
