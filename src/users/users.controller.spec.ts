@@ -39,6 +39,21 @@ describe('UsersController', () => {
 
     const USER_REPOSITORY_TOKEN = getRepositoryToken(User);
 
+    const usersMockedService = {
+        save: jest.fn(),
+        createQueryBuilder: () => ({
+            orWhere: jest.fn().mockReturnThis(),
+            getOne: jest.fn().mockReturnThis(),
+            leftJoin: jest.fn().mockReturnThis(),
+            leftJoinAndSelect: jest.fn().mockReturnThis(),
+            where: jest.fn().mockReturnThis(),
+        }),
+        findUserById: jest.fn(),
+        findUserByEmail: jest.fn(),
+        withWishes: jest.fn(),
+        withFriends: jest.fn(),
+    };
+
     beforeEach(async () => {
         const moduleRef = await Test.createTestingModule({
             controllers: [UsersController],
@@ -46,16 +61,7 @@ describe('UsersController', () => {
                 UsersService,
                 {
                     provide: USER_REPOSITORY_TOKEN,
-                    useValue: {
-                        save: jest.fn(),
-                        createQueryBuilder: () => ({
-                            orWhere: jest.fn().mockReturnThis(),
-                            getOne: jest.fn().mockReturnThis(),
-                            leftJoin: jest.fn().mockReturnThis(),
-                            leftJoinAndSelect: jest.fn().mockReturnThis(),
-                            where: jest.fn().mockReturnThis(),
-                        }),
-                    },
+                    useValue: usersMockedService,
                 },
                 {
                     provide: AccessAuthGuard,
