@@ -75,7 +75,6 @@ export class UsersService {
 
     private async addFriend(user: User, friendId: number) {
         const friend = await this.findUserById(friendId);
-
         if (!friend) {
             throw new HttpException('Friend not found', HttpStatus.BAD_REQUEST);
         }
@@ -113,7 +112,6 @@ export class UsersService {
 
     async getPublicUserById(id: number) {
         const user = await this.findFullyPopulatedUser(id);
-
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
         }
@@ -123,7 +121,7 @@ export class UsersService {
 
     async getPublicUserByEmail(email: string) {
         const user = await this.findFullyPopulatedUser(undefined, email);
-
+      
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
         }
