@@ -1,6 +1,5 @@
 import { IsEmail, IsNotEmpty } from 'class-validator';
 import { Wish } from '../../wishes/entities/wish.entity';
-import { User } from '../entity/user.entity';
 
 export class CreateUserDto {
     @IsEmail()
@@ -18,15 +17,15 @@ export class CreateUserDto {
     picture?: string;
 }
 
-interface PublicUserDTO {
+export interface PublicUserDTO {
     id: number;
     email: string;
     name: string;
     surname: string;
     picture: string;
     isActive: boolean;
-    followings?: User[];
-    followers?: User[];
+    followings?: PublicUserDTO[];
+    followers?: PublicUserDTO[];
     wishes?: Wish[];
 }
 
@@ -37,14 +36,11 @@ export class CreatePublicUserDto implements PublicUserDTO {
     surname: string;
     picture: string;
     isActive: boolean;
-    followers?: User[];
-    followings?: User[];
+    followers?: PublicUserDTO[];
+    followings?: PublicUserDTO[];
     wishes?: Wish[];
 
-    constructor({ password, ...user }: User) {
-        return {
-            ...this,
-            ...user,
-        };
+    constructor(props: PublicUserDTO) {
+        return props;
     }
 }

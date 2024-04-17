@@ -65,10 +65,7 @@ export class UsersService {
             .getOne();
     }
 
-    private async updateFriendFollowers(friendId: number, userId: number) {
-        const friend = await this.withFriends(
-            await this.findUserById(friendId),
-        );
+    private async updateFriendFollowers(friend: User, userId: number) {
         const user = await this.withFriends(await this.findUserById(userId));
 
         friend.followers.push(user);
@@ -78,6 +75,11 @@ export class UsersService {
 
     private async addFriend(user: User, friendId: number) {
         const friend = await this.findUserById(friendId);
+
+        if (!friend) {
+            throw new HttpException('Friend not found', HttpStatus.BAD_REQUEST);
+        }
+
         const isIncluded = user.followings.find(
             (friend) => friend.id === friendId,
         );
@@ -85,7 +87,7 @@ export class UsersService {
         if (!isIncluded) {
             user.followings.push(friend);
 
-            this.updateFriendFollowers(friend.id, user.id);
+            this.updateFriendFollowers(friend, user.id);
         }
     }
 
@@ -112,11 +114,19 @@ export class UsersService {
     async getPublicUserById(id: number) {
         const user = await this.findFullyPopulatedUser(id);
 
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+
         return new CreatePublicUserDto(user);
     }
 
     async getPublicUserByEmail(email: string) {
         const user = await this.findFullyPopulatedUser(undefined, email);
+
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
 
         return new CreatePublicUserDto(user);
     }
