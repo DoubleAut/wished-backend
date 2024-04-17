@@ -48,16 +48,19 @@ export class WishesService {
         const wishes = await Wish.getWishes(userId);
 
         return wishes.map((wish) => {
-            if (wish.canBeAnon) {
-                const { reservedBy, ...rest } = wish;
-
-                return rest;
+            if (!wish.canBeAnon) {
+                return {
+                    ...wish,
+                    reservedBy: new CreatePublicUserDto(wish.reservedBy),
+                };
             }
 
-            return {
-                ...wish,
-                reservedBy: new CreatePublicUserDto(wish.reservedBy),
-            };
+            if (wish.canBeAnon) {
+                return {
+                    ...wish,
+                    reservedBy: null,
+                };
+            }
         });
     }
 
