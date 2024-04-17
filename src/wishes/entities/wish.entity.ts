@@ -20,7 +20,7 @@ export class Wish extends BaseEntity {
     description: string;
 
     @Column()
-    price: string;
+    price: number;
 
     @Column({ default: false })
     canBeAnon: boolean;
@@ -51,6 +51,7 @@ export class Wish extends BaseEntity {
 
     static async getWishes(userId: number) {
         return await this.createQueryBuilder('wish')
+            .leftJoinAndSelect('wish.reservedBy', 'user')
             .where('wish.ownerId = :id', { id: userId })
             .getMany();
     }

@@ -7,7 +7,7 @@ export class CreateWishDto {
     description: string;
 
     @IsNotEmpty()
-    price: string;
+    price: number;
 
     @IsNotEmpty()
     canBeAnon: boolean;
@@ -18,7 +18,6 @@ export class CreateWishDto {
     @IsNotEmpty()
     isReserved: boolean;
 
-    @IsNotEmpty()
     picture?: string;
 
     @IsNotEmpty()
