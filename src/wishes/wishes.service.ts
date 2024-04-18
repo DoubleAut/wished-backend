@@ -20,6 +20,11 @@ export class WishesService {
         const owner = await this.usersRepository.findOneBy({
             id: createWishDto.userId,
         });
+
+        if (!owner) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+
         const wish = new Wish();
 
         wish.title = createWishDto.title;
@@ -48,16 +53,19 @@ export class WishesService {
         const wishes = await Wish.getWishes(userId);
 
         return wishes.map((wish) => {
-            if (wish.canBeAnon) {
-                const { reservedBy, ...rest } = wish;
-
-                return rest;
+            if (!wish.canBeAnon) {
+                return {
+                    ...wish,
+                    reservedBy: new CreatePublicUserDto(wish.reservedBy),
+                };
             }
 
-            return {
-                ...wish,
-                reservedBy: new CreatePublicUserDto(wish.reservedBy),
-            };
+            if (wish.canBeAnon) {
+                return {
+                    ...wish,
+                    reservedBy: null,
+                };
+            }
         });
     }
 
