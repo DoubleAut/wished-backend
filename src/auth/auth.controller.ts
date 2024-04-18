@@ -1,6 +1,7 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
+import { PublicUserDTO } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
 import { AccessAuthGuard, RefreshAuthGuard } from './guards/jwt-auth.guard';
 
@@ -14,7 +15,8 @@ export class AuthController {
         @Req() request: Request,
         @Res({ passthrough: true }) response: Response,
     ) {
-        const user = request.user as { sub: number; email: string };
+        const user = request.user as PublicUserDTO;
+
         const tokens = await this.authService.signIn(user);
 
         response.cookie('refreshToken', tokens.refreshToken, {
@@ -29,6 +31,7 @@ export class AuthController {
         return result;
     }
 
+    @UseGuards(AccessAuthGuard)
     @Post('logout')
     async logout(
         @Body('email') email: string,
@@ -38,12 +41,6 @@ export class AuthController {
         response.removeHeader('Authorization');
 
         return this.authService.signOut(email);
-    }
-
-    @UseGuards(AccessAuthGuard)
-    @Post('test')
-    async test() {
-        return { message: 'successful' };
     }
 
     @UseGuards(RefreshAuthGuard)

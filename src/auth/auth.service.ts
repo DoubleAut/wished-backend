@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PublicUserDTO } from 'src/users/dto/create-user.dto';
 import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { Auth } from './entity/auth.entity';
@@ -51,24 +52,18 @@ export class AuthService {
         return this.authRepository.save(savedTokens);
     }
 
-    async validateToken(token: string) {
-        const isValid = await this.jwtService.verifyAsync(token);
-
-        return !!isValid;
-    }
-
-    async signIn(user: { sub: number; email: string }) {
+    async signIn(user: PublicUserDTO) {
         const userTokens = await this.authRepository.findOneBy({
-            userId: user.sub,
+            userId: user.id,
         });
 
-        const payload = { sub: user.sub, email: user.email };
+        const payload = { sub: user.id, email: user.email };
         const tokens = await this.generateTokens(payload);
 
         if (!userTokens) {
             return await this.saveTokensAndReturn({
                 ...tokens,
-                userId: user.sub,
+                userId: user.id,
             });
         } else {
             return await this.updateTokensAndReturn(tokens, userTokens);
@@ -94,12 +89,17 @@ export class AuthService {
 
     async signOut(email: string) {
         const user = await this.usersService.getPublicUserByEmail(email);
+
+        if (!user) {
+            throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
+        }
+
         const userTokens = await this.authRepository.findOneBy({
             userId: user.id,
         });
 
-        await this.authRepository.delete(userTokens);
+        const result = await this.authRepository.delete(userTokens);
 
-        return await this.authRepository.delete(userTokens);
+        return result.affected;
     }
 }
