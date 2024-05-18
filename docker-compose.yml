@@ -1,4 +1,3 @@
-version: '3.9'
 services:
     wished-db:
         image: postgres
@@ -10,3 +9,33 @@ services:
             POSTGRES_DB: wished
             POSTGRES_USER: admin
             POSTGRES_PASSWORD: example
+        networks:
+            - wished
+
+    wished-app:
+        env_file:
+            - .env.development
+        build:
+            context: .
+            args:
+                - API_PORT=${API_PORT}
+                - UPLOADTHING_SECRET={UPLOADTHING_SECRET}
+                - UPLOADTHING_APP_ID={UPLOADTHING_APP_ID}
+                - HOST={HOST}
+                - PORT={PORT}
+                - DATABASE={DATABASE}
+                - USERNAME={USERNAME}
+                - PASSWORD={PASSWORD}
+                - SYNCHRONIZE={SYNCHRONIZE}
+        container_name: wished-app
+        ports:
+            - '5000:5000'
+        depends_on:
+            - wished-db
+        volumes:
+            - ./src:/app/src
+        networks:
+            - wished
+
+networks:
+    wished:
