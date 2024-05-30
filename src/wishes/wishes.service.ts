@@ -50,27 +50,44 @@ export class WishesService {
         Example: GET url/wishes/2?page=1&items_gap=15
     */
     async findAll(userId: number) {
-        const wishes = await Wish.getWishes(userId);
-
-        return wishes.map((wish) => {
-            if (!wish.canBeAnon) {
-                return {
-                    ...wish,
-                    reservedBy: new CreatePublicUserDto(wish.reservedBy),
-                };
-            }
-
-            if (wish.canBeAnon) {
-                return {
-                    ...wish,
-                    reservedBy: null,
-                };
-            }
+        const wishes = await this.wishesRepository.find({
+            where: {
+                owner: {
+                    id: userId,
+                },
+            },
+            relations: {
+                owner: true,
+                reservedBy: true,
+            },
         });
+
+        const reservations = await this.wishesRepository.find({
+            where: {
+                reservedBy: {
+                    id: userId,
+                },
+            },
+            relations: {
+                owner: true,
+                reservedBy: true,
+            },
+        });
+
+        return {
+            wishes,
+            reservations,
+        };
     }
 
     async reserve(reserverId: number, wishId: number) {
-        const wish = await Wish.getWishWithReserver(wishId);
+        const wish = await this.wishesRepository.findOne({
+            where: { id: wishId },
+            relations: {
+                owner: true,
+                reservedBy: true,
+            },
+        });
 
         if (wish.reservedBy) {
             throw new HttpException(
@@ -84,6 +101,7 @@ export class WishesService {
         });
 
         wish.reservedBy = reserver;
+        wish.isReserved = true;
 
         const result = await this.wishesRepository.save(wish);
 
@@ -94,7 +112,13 @@ export class WishesService {
     }
 
     async cancel(reserverId: number, wishId: number) {
-        const wish = await Wish.getWishWithReserver(wishId);
+        const wish = await this.wishesRepository.findOne({
+            where: { id: wishId },
+            relations: {
+                owner: true,
+                reservedBy: true,
+            },
+        });
 
         if (!wish.reservedBy) {
             throw new HttpException(
@@ -113,25 +137,42 @@ export class WishesService {
         }
 
         wish.reservedBy = null;
+        wish.isReserved = false;
 
         const result = await this.wishesRepository.save(wish);
 
-        return result;
+        return {
+            ...result,
+            owner: new CreatePublicUserDto(result.owner),
+        };
     }
 
     async update(id: number, updateWishDto: UpdateWishDto) {
-        const wish = await Wish.findOneBy({ id });
+        const wish = await this.wishesRepository.findOne({
+            where: { id },
+            relations: {
+                owner: true,
+                reservedBy: true,
+            },
+        });
 
         for (const key in updateWishDto) {
-            if (updateWishDto[key]) {
-                wish[key] = updateWishDto[key];
-            }
+            wish[key] = updateWishDto[key];
         }
 
-        return await this.wishesRepository.save(wish);
+        const result = await this.wishesRepository.save(wish);
+
+        return {
+            ...result,
+            owner: new CreatePublicUserDto(result.owner),
+        };
     }
 
     async remove(id: number) {
+        const wish = await this.wishesRepository.findOne({
+            where: { id },
+        });
+
         const result = await this.wishesRepository.delete({ id });
 
         return result.affected;
