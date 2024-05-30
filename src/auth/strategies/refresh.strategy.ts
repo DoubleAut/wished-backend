@@ -20,7 +20,12 @@ export class RefreshTokenStrategy extends PassportStrategy(
         });
     }
 
-    async validate(payload: unknown) {
-        return payload;
+    async validate(payload: {
+        sub: number;
+        email: string;
+        iat: number;
+        exp: number;
+    }) {
+        return { id: payload.sub, email: payload.email };
     }
 }
