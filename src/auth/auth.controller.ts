@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Post,
+    Req,
+    Res,
+    UseGuards,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { PublicUserDTO } from 'src/users/dto/create-user.dto';
@@ -7,7 +16,10 @@ import { AccessAuthGuard, RefreshAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly jwtService: JwtService,
+    ) {}
 
     @UseGuards(AuthGuard('local'))
     @Post('login')
@@ -19,16 +31,19 @@ export class AuthController {
 
         const tokens = await this.authService.signIn(user);
 
+        const decodedRefreshToken = this.jwtService.decode(tokens.refreshToken);
+
         response.cookie('refreshToken', tokens.refreshToken, {
             httpOnly: true,
+            secure: true,
+            expires: new Date(decodedRefreshToken.exp * 1000),
+            sameSite: 'lax',
         });
 
-        const result = {
+        return {
             ...request.user,
             accessToken: tokens.accessToken,
         };
-
-        return result;
     }
 
     @UseGuards(AccessAuthGuard)
@@ -44,18 +59,25 @@ export class AuthController {
     }
 
     @UseGuards(RefreshAuthGuard)
-    @Post('refresh')
+    @Get('refresh')
     async refresh(
-        @Body('email') email: string,
+        @Req() request: Request,
         @Res({ passthrough: true }) response: Response,
     ) {
-        const tokens = await this.authService.refresh(email);
+        const user = request.user as { id: number; email: string };
+        const tokens = await this.authService.refresh(user.email);
+
+        const decodedRefreshToken = this.jwtService.decode(tokens.refreshToken);
 
         response.cookie('refreshToken', tokens.refreshToken, {
             httpOnly: true,
+            secure: true,
+            expires: new Date(decodedRefreshToken.exp * 1000),
+            sameSite: 'lax',
         });
 
         return {
+            id: user.id,
             accessToken: tokens.accessToken,
         };
     }
