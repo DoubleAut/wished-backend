@@ -28,6 +28,16 @@ export class UsersController {
         return this.usersService.getPublicUserById(id);
     }
 
+    @Get(':id/friends')
+    getUserFriends(@Param('id', ParseIntPipe) id: number) {
+        return this.usersService.getUserFriends(id);
+    }
+
+    @Get()
+    findAll() {
+        return this.usersService.getAll();
+    }
+
     @UseGuards(AccessAuthGuard)
     @Patch(':id')
     update(
@@ -41,5 +51,23 @@ export class UsersController {
     @Delete(':id')
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.usersService.remove(id);
+    }
+
+    @UseGuards(AccessAuthGuard)
+    @Post(':userId/friends/:friendId')
+    addFriend(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Param('friendId', ParseIntPipe) friendId: number,
+    ) {
+        return this.usersService.addFriend(userId, friendId);
+    }
+
+    @UseGuards(AccessAuthGuard)
+    @Delete(':userId/friends/:friendId')
+    removeFriend(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Param('friendId', ParseIntPipe) friendId: number,
+    ) {
+        return this.usersService.removeFriend(userId, friendId);
     }
 }
