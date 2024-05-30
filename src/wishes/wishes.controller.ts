@@ -14,14 +14,13 @@ import { Request } from 'express';
 import { AccessAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
-import { ValidationGuard } from './strategies/user.strategy';
 import { WishesService } from './wishes.service';
 
 @Controller('wishes')
 export class WishesController {
     constructor(private readonly wishesService: WishesService) {}
 
-    @UseGuards(AccessAuthGuard, ValidationGuard)
+    @UseGuards(AccessAuthGuard)
     @Post()
     async create(@Body() updateDto: CreateWishDto) {
         return await this.wishesService.create(updateDto);
@@ -32,7 +31,7 @@ export class WishesController {
         return await this.wishesService.findAll(userId);
     }
 
-    @UseGuards(AccessAuthGuard, ValidationGuard)
+    @UseGuards(AccessAuthGuard)
     @Patch(':id')
     update(
         @Param('id', ParseIntPipe) id: number,
@@ -41,14 +40,14 @@ export class WishesController {
         return this.wishesService.update(id, updateWishDto);
     }
 
-    @UseGuards(AccessAuthGuard, ValidationGuard)
+    @UseGuards(AccessAuthGuard)
     @Delete(':id')
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.wishesService.remove(id);
     }
 
     @UseGuards(AccessAuthGuard)
-    @Post('reserve/:id')
+    @Patch('reserve/:id')
     reserve(@Req() request: Request, @Param('id', ParseIntPipe) id: number) {
         const user = request.user as { sub: number; email: string };
 
@@ -56,7 +55,7 @@ export class WishesController {
     }
 
     @UseGuards(AccessAuthGuard)
-    @Post('cancel/:id')
+    @Delete('cancel/:id')
     cancel(@Req() request: Request, @Param('id', ParseIntPipe) wishId: number) {
         const user = request.user as { sub: number; email: string };
 
