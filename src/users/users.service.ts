@@ -21,13 +21,6 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
     ) {}
 
-    private findUserById(id: number) {
-        return this.usersRepository
-            .createQueryBuilder('user')
-            .where('user.id = :id', { id })
-            .getOne();
-    }
-
     private findUserByEmail(email: string) {
         return this.usersRepository
             .createQueryBuilder('user')
@@ -37,44 +30,46 @@ export class UsersService {
             .getOne();
     }
 
-    private withWishes(user: User) {
-        return this.usersRepository
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.wishes', 'wish')
-            .where('user.id = :id', { id: user.id })
-            .getOne();
+    async getUserFriends(id: number) {
+        const userFriends = await this.usersRepository.findOne({
+            where: { id },
+            select: {
+                followers: true,
+                followings: true,
+            },
+            relations: {
+                followers: true,
+                followings: true,
+            },
+        });
+
+        if (!userFriends) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+
+        return userFriends;
     }
 
-    private withFriends(user: User) {
-        return this.usersRepository
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.followers', 'followers')
-            .leftJoinAndSelect('user.followings', 'followings')
-            .where('user.id = :id', { id: user.id })
-            .getOne();
+    private async findFullyPopulatedUser(id?: number, email?: string) {
+        const user = await this.usersRepository.findOne({
+            where: { id, email },
+            relations: ['followings', 'followers', 'wishes', 'reservations'],
+        });
+
+        return user;
     }
 
-    private findFullyPopulatedUser(id?: number, email?: string) {
-        return this.usersRepository
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.wishes', 'wishes')
-            .leftJoinAndSelect('user.followers', 'followers')
-            .leftJoinAndSelect('user.followings', 'followings')
-            .where('user.id = :id', { id })
-            .orWhere('user.email = :email', { email })
-            .getOne();
-    }
+    async addFriend(userId: number, friendId: number) {
+        const user = await this.usersRepository.findOne({
+            where: { id: userId },
+            relations: ['followings', 'followers'],
+        });
 
-    private async updateFriendFollowers(friend: User, userId: number) {
-        const user = await this.withFriends(await this.findUserById(userId));
+        const friend = await this.usersRepository.findOne({
+            where: { id: friendId },
+            relations: ['followings', 'followers'],
+        });
 
-        friend.followers.push(user);
-
-        this.usersRepository.save(friend);
-    }
-
-    private async addFriend(user: User, friendId: number) {
-        const friend = await this.findUserById(friendId);
         if (!friend) {
             throw new HttpException('Friend not found', HttpStatus.BAD_REQUEST);
         }
@@ -85,9 +80,51 @@ export class UsersService {
 
         if (!isIncluded) {
             user.followings.push(friend);
+            friend.followers.push(user);
 
-            this.updateFriendFollowers(friend, user.id);
+            await this.usersRepository.save(user);
+            await this.usersRepository.save(friend);
         }
+
+        const result = await this.usersRepository.findOne({
+            where: { id: userId },
+            relations: ['followings', 'followers'],
+        });
+
+        return new CreatePublicUserDto(result);
+    }
+
+    async removeFriend(userId: number, friendId: number) {
+        const user = await this.usersRepository.findOne({
+            where: { id: userId },
+            relations: ['followings', 'followers'],
+        });
+
+        const friend = await this.usersRepository.findOne({
+            where: { id: friendId },
+            relations: ['followings', 'followers'],
+        });
+
+        if (!friend) {
+            throw new HttpException('Friend not found', HttpStatus.BAD_REQUEST);
+        }
+
+        user.followings = user.followings.filter(
+            (follower) => follower.id !== friendId,
+        );
+        friend.followers = friend.followers.filter(
+            (follower) => follower.id !== userId,
+        );
+
+        await this.usersRepository.save(user);
+        await this.usersRepository.save(friend);
+
+        const result = await this.usersRepository.findOne({
+            where: { id: userId },
+            relations: ['followings', 'followers'],
+        });
+
+        return new CreatePublicUserDto(result);
     }
 
     private async validatePassword(password: string, usersPassword: string) {
@@ -111,7 +148,10 @@ export class UsersService {
     }
 
     async getPublicUserById(id: number) {
-        const user = await this.findFullyPopulatedUser(id);
+        const user = await this.usersRepository.findOne({
+            where: { id },
+        });
+
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
         }
@@ -119,9 +159,27 @@ export class UsersService {
         return new CreatePublicUserDto(user);
     }
 
+    async getAll() {
+        const users = await this.usersRepository
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.wishes', 'wishes')
+            .leftJoinAndSelect('user.followers', 'followers')
+            .leftJoinAndSelect('user.followings', 'followings')
+            .leftJoinAndSelect('user.reservations', 'reservedBy')
+            .getMany();
+
+        if (!users) {
+            throw new HttpException('Users not found', HttpStatus.NOT_FOUND);
+        }
+
+        const result = users.map((user) => new CreatePublicUserDto(user));
+
+        return result;
+    }
+
     async getPublicUserByEmail(email: string) {
         const user = await this.findFullyPopulatedUser(undefined, email);
-      
+
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
         }
@@ -133,7 +191,10 @@ export class UsersService {
         const isExist = await this.findUserByEmail(data.email);
 
         if (!!isExist) {
-            throw new HttpException('User already exist', HttpStatus.CONFLICT);
+            throw new HttpException(
+                'User with provided email already exist',
+                HttpStatus.BAD_REQUEST,
+            );
         }
 
         const hashedPassword = await hashPassword(data.password);
@@ -151,12 +212,10 @@ export class UsersService {
     }
 
     async update(id: number, updateUserDto: UpdateUserDto) {
-        const user = await this.withFriends(await this.findUserById(id));
-        const { followings, password, ...rest } = updateUserDto;
-
-        if (followings) {
-            await this.addFriend(user, followings);
-        }
+        const user = await this.usersRepository.findOne({
+            where: { id },
+        });
+        const { password, ...rest } = updateUserDto;
 
         for (const key in rest) {
             if (updateUserDto[key]) {
